@@ -1,10 +1,10 @@
 class SSLink extends IpDrv.TcpLink config(serverstatus);
 
 var PlayerController PC; //reference to our player controller
-var string TargetHost; //URL or P address of web server
-var int TargetPort; //port you want to use for the link
-var string path; //path to file you want to request
-var string requesttext; //data we will send
+var config string TargetHost; //URL or P address of web server
+var config int TargetPort; //port you want to use for the link
+var config string path; //path to file you want to request
+var config string requesttext; //data we will send
 var int score; //score the player controller will send us
 var bool send; //to switch between sending and getting requests
 var bool reported;
@@ -129,6 +129,7 @@ function String ParsePlayers(){
   local TribesReplicationInfo pri;
   local int i,ammount;
   local StatData std;
+  local string IP;
 
   r = "[";
 
@@ -140,10 +141,13 @@ function String ParsePlayers(){
 
     c = PlayerCharacterController(CTRL);
     pri = TribesReplicationInfo(c.PlayerReplicationInfo);
+    IP = c.GetPlayerNetworkAddress();
+
 
     r @= "{";
 
     r @= KeyValue("name", pri.PlayerName)@",";
+    r @= KeyValue("ip", IP);
     r @= KeyValueInt("ping", pri.Ping)@",";
     r @= KeyValueInt("starttime", pri.StartTime)@",";
     r @= KeyValue("voice", pri.VoiceSetPackageName)@",";
@@ -155,7 +159,7 @@ function String ParsePlayers(){
     r @= KeyValueInt("offense", pri.offenseScore)@",";
     r @= KeyValueInt("defense", pri.defenseScore)@",";
     r @= KeyValueInt("style", pri.styleScore);
-
+    
     for( i=0; i<pri.statDataList.Length; i++ )
     {
       ammount = pri.statDataList[i].amount;
@@ -172,9 +176,9 @@ function String ParsePlayers(){
 
 defaultproperties
 {
-    TargetHost="tribesrevengeance.com"
+    TargetHost="stats.tribesrevengeance.com"
     TargetPort=80 //default for HTTP
-    path = "php/reportserverstatus.php"
+    path = "reportserverstatus.php"
     send = false;
     reported = false;
 }
