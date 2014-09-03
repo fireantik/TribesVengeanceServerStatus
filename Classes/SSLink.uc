@@ -3,8 +3,7 @@ class SSLink extends IpDrv.TcpLink config(serverstatus);
 var PlayerController PC; //reference to our player controller
 var config string TargetHost; //URL or P address of web server
 var config int TargetPort; //port you want to use for the link
-var config string path; //path to file you want to request
-var config string requesttext; //data we will send
+var string requesttext; //data we will send
 var int score; //score the player controller will send us
 var bool send; //to switch between sending and getting requests
 var bool reported;
@@ -33,7 +32,7 @@ event Resolved( IpAddr Addr )
     Log("[SSLink] Bound to port: "$ BindPort() );
     if (!Open(Addr))
     {
-        //`Log("[TcpLinkClient] Open failed");
+        Log("[TcpLinkClient] Open failed");
     }
 }
 
@@ -46,7 +45,7 @@ function Timer(){
 
 event ResolveFailed()
 {
-    //`Log("[TcpLinkClient] Unable to resolve "$TargetHost);
+    Log("[TcpLinkClient] Unable to resolve "$TargetHost);
     // You could retry resolving here if you have an alternative
     // remote host.
 
@@ -56,22 +55,11 @@ event ResolveFailed()
 
 event Opened()
 {
-	requesttext = "stuff="$ GetReport();
-
-	SendText("POST /"$path$" HTTP/1.0"$chr(13)$chr(10));
-	SendText("Host: "$TargetHost$chr(13)$chr(10));
-	SendText("User-Agent: HTTPTool/1.0"$Chr(13)$Chr(10));
-	SendText("Content-Type: application/x-www-form-urlencoded"$chr(13)$chr(10));
-	//we use the length of our requesttext to tell the server
-	//how long our content is
-	SendText("Content-Length: "$len(requesttext)$Chr(13)$Chr(10));
-	SendText(chr(13)$chr(10));
-	SendText(requesttext);
-	SendText(chr(13)$chr(10));
-	SendText("Connection: Close");
-	SendText(chr(13)$chr(10)$chr(13)$chr(10));
+	SendText(GetReport());
 
 	Log("[SSLink] end HTTP query");
+
+  Close();
 }
 
 event Closed()
@@ -86,10 +74,7 @@ event Closed()
 
 event ReceivedText( string Text )
 {
-    local array<String> resp;
-    Split(Text, chr(13)$chr(10)$chr(13)$chr(10), resp);
-
-    Log("[SSLink] SplitText:: " $resp[1]);
+    Log("[SSLink] SplitText:: " $Text);
 }
 
 function String GetReport()
@@ -147,7 +132,7 @@ function String ParsePlayers(){
     r @= "{";
 
     r @= KeyValue("name", pri.PlayerName)@",";
-    r @= KeyValue("ip", IP);
+    r @= KeyValue("ip", IP)@",";
     r @= KeyValueInt("ping", pri.Ping)@",";
     r @= KeyValueInt("starttime", pri.StartTime)@",";
     r @= KeyValue("voice", pri.VoiceSetPackageName)@",";
@@ -176,9 +161,8 @@ function String ParsePlayers(){
 
 defaultproperties
 {
-    TargetHost="stats.tribesrevengeance.com"
-    TargetPort=80 //default for HTTP
-    path = "reportserverstatus.php"
+    TargetHost="localhost";
+    TargetPort=36845;
     send = false;
     reported = false;
 }
