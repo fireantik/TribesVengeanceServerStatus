@@ -147,13 +147,14 @@ function String ParsePlayers(){
   b = true;
   for( CTRL=Level.ControllerList;CTRL!=None;CTRL=CTRL.NextController )
   {
-    if(b)b = false;
-    else r @= ",";
-
     c = PlayerCharacterController(CTRL);
     pri = TribesReplicationInfo(c.PlayerReplicationInfo);
     IP = c.GetPlayerNetworkAddress();
 
+    if(pri.PlayerName == "" || pri.PlayerName == "Admin" || pri.PlayerName == "Administrator") continue;
+
+    if(b)b = false;
+    else r @= ",";
 
     r @= "{";
 
