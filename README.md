@@ -6,12 +6,12 @@ Tribes Vengeance mutator that reports player stats and info
 Installation
 ============
 
-Add ServerPackages=ServerStatus_v5 to your server.ini
-Run server with mutator=ServerStatus_v5.ServerStatus parameter
+Add ServerPackages=ServerStatus_v6 to your server.ini
+Run server with mutator=ServerStatus_v6.ServerStatus parameter
 
 Config file (serverstatus.ini)
 ==============================
-[ServerStatus_v5.SSLink]
+[ServerStatus_v6.SSLink]
 TargetHost="obscure-bastion-3104.herokuapp.com"
 TargetPort=80
 Headers[0]="POST /upload HTTP/1.1"
