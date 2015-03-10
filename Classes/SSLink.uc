@@ -83,6 +83,7 @@ event Opened()
   SendText(encodedStr);
   SendText("\r\n");
 
+  log("[ServerStatus] sent: encodedStr");
 	log("[ServerStatus] end HTTP query");
 
   Close();
@@ -148,11 +149,11 @@ function String ParsePlayers(){
   for( CTRL=Level.ControllerList;CTRL!=None;CTRL=CTRL.NextController )
   {
     c = PlayerCharacterController(CTRL);
+    if(c == None) continue;
     pri = TribesReplicationInfo(c.PlayerReplicationInfo);
+    if(pri == None) continue;
     IP = c.GetPlayerNetworkAddress();
-
-    if(pri.PlayerName == "" || pri.PlayerName == "Admin" || pri.PlayerName == "Administrator") continue;
-
+    
     if(b)b = false;
     else r @= ",";
 
