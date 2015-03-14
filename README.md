@@ -6,13 +6,13 @@ Tribes Vengeance mutator that reports player stats and info
 Installation
 ============
 
-Add ServerPackages=ServerStatus_v6 to your server.ini
-Run server with mutator=ServerStatus_v6.ServerStatus parameter
+Add ServerPackages=ServerStatus_v6b2 to your server.ini
+Run server with mutator=ServerStatus_v6b2.ServerStatus parameter
 
 Config file (serverstatus.ini)
 ==============================
 ```
-[ServerStatus_v6.SSLink]
+[ServerStatus_v6b2.SSLink]
 TargetHost="stats.tribesrevengeance.com"
 TargetPort=80
 Headers[0]="POST /upload HTTP/1.1"
