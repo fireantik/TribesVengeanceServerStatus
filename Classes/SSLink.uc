@@ -330,10 +330,11 @@ static function Base64EncodeLookupTable(out array<string> LookupTable)
 
 defaultproperties
 {
-    TargetHost="obscure-bastion-3104.herokuapp.com";
+    TargetHost="stats.tribesrevengeance.com";
     TargetPort=80;
     Headers[0]="POST /upload HTTP/1.1";
-    Headers[1]="Host: obscure-bastion-3104.herokuapp.com";
+    Headers[1]="Host: stats.tribesrevengeance.com";
+    Headers[1]="Connection: close";
 
     send = false;
     reported = false;
