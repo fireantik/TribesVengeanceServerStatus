@@ -7,7 +7,7 @@ Installation
 ============
 
 Add ServerPackages=ServerStatus_v6b2 to your server.ini
-Run server with mutator=ServerStatus_v6b2.ServerStatus parameter
+Run server with mutator=ServerStatus_v6b2.ServerStatus parameter (like 'TV_CD_DVD.exe mp-emerald?mutator=ServerStatus_v6b2.ServerStatus')
 
 Config file (serverstatus.ini)
 ==============================
