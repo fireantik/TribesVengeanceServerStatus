@@ -3,21 +3,23 @@ TribesVengeanceServerStatus
 
 Tribes Vengeance mutator that reports player stats and info
 
+[Download](https://github.com/fireantik/TribesVengeanceServerStatus/releases)
+
 Installation
 ============
 
-Add ServerPackages=ServerStatus_v6b2 to your server.ini
-Run server with mutator=ServerStatus_v6b2.ServerStatus parameter (like 'TV_CD_DVD.exe mp-emerald?mutator=ServerStatus_v6b2.ServerStatus')
+Add
+``` 
+ServerActors=TribesVengeanceServerStatus.SSLink
+```
+to your main server server.ini config file
 
 If you have installed the mod correcly, you should see '[ServerStatus] init. Host:' in your server console after game starts.
 
 Config file (serverstatus.ini)
 ==============================
 ```
-[ServerStatus_v6b2.SSLink]
+[TribesVengeanceServerStatus.SSLink]
 TargetHost="stats.tribesrevengeance.com"
 TargetPort=80
-Headers[0]="POST /upload HTTP/1.1"
-Headers[1]="stats.tribesrevengeance.com"
-Headers[2]="Connection: close"
 ```

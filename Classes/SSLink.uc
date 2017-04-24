@@ -3,37 +3,36 @@ class SSLink extends IpDrv.TcpLink config(serverstatus);
 var PlayerController PC; //reference to our player controller
 var config string TargetHost; //URL or P address of web server
 var config int TargetPort; //port you want to use for the link
-var config array<string> Headers;
 var string requesttext; //data we will send
-var int score; //score the player controller will send us
-var bool send; //to switch between sending and getting requests
-var bool reported;
+var bool reporting;
+var bool sending;
 
-event PostBeginPlay()
+event BeginPlay()
 {
-    super.PostBeginPlay(); 
-    SetTimer(1,true);
-    log("[ServerStatus] target host is "$TargetHost);
-    log("[ServerStatus] target port is "$TargetPort);
-    warn("[ServerStatus] init. Host:"$TargetHost);
+    super.BeginPlay();
+	
+	reporting = false;
+	sending = false;
+    SetTimer(1, true);
+    Log("[ServerStatus] BeginPlay. Host:" $ TargetHost);
 }
 
-function ResolveMe() //removes having to send a host
+function ResolveStats() //removes having to send a host
 {
     Resolve(TargetHost);
 }
 
-event Resolved( IpAddr Addr )
+event Resolved(IpAddr Addr)
 {
     // The hostname was resolved succefully
-    log("[ServerStatus] "$TargetHost$" resolved to "$ IpAddrToString(Addr));
+    Log("[ServerStatus] " $ TargetHost $ " resolved to " $ IpAddrToString(Addr));
 
     // Make sure the correct remote port is set, resolving doesn't set
     // the port value of the IpAddr structure
     Addr.Port = TargetPort;
 
     //dont comment out this log because it rungs the function bindport
-    log("[ServerStatus] Bound to port: "$ BindPort() );
+    Log("[ServerStatus] Bound to port: " $ BindPort());
     if (!Open(Addr))
     {
         log("[ServerStatus] Open failed");
@@ -41,20 +40,18 @@ event Resolved( IpAddr Addr )
 }
 
 function Timer(){
-  if(MultiplayerGameInfo(Level.Game).bOnGameEndCalled && !reported){
-    ResolveMe();
-    reported = true;
+  //Log("[ServerStatus] Timer");
+
+  if(MultiplayerGameInfo(Level.Game).bOnGameEndCalled && !reporting){
+    Log("[ServerStatus] Resolving");
+    ResolveStats();
+    reporting = true;
   }
 }
 
 event ResolveFailed()
 {
-    log("[ServerStatus] Unable to resolve "$TargetHost);
-    // You could retry resolving here if you have an alternative
-    // remote host.
-
-    //send failed message to scaleform UI
-    //JunHud(JunPlayerController(PC).myHUD).JunMovie.CallSetHTML("Failed");
+    Warn("[ServerStatus] Unable to resolve " $ TargetHost);
 }
 
 event Opened()
@@ -66,6 +63,14 @@ event Opened()
   local array<string> lookup;
   local array<string> inA;
   local array<string> outA;
+  
+  if(sending){
+	return;
+  } else {
+	sending = true;
+  }
+  
+  Log("[ServerStatus] Connection opened, sending data");
 
   reportStr = GetReport();
   Base64EncodeLookupTable(lookup);
@@ -74,17 +79,18 @@ event Opened()
   encodedStr = outA[0];
 
   finalStr = "";
-  for (i = 0; i < Headers.Length; i++)
-  {
-    SendText(Headers[i]$"\r\n");
-  }
-  SendText("Content-length: "$len(encodedStr)$"\r\n");
+  
+  SendText("POST /upload HTTP/1.1\r\n");
+  SendText("Host: " $ TargetHost $ "\r\n");
+  SendText("Connection: close\r\n");
+  SendText("Content-length: " $ len(encodedStr) $ "\r\n");
   SendText("\r\n");
+  
   SendText(encodedStr);
   SendText("\r\n");
 
-  log("[ServerStatus] sent: encodedStr");
-	log("[ServerStatus] end HTTP query");
+  Log("[ServerStatus] Sent: " $ encodedStr);
+  Log("[ServerStatus] End HTTP query");
 
   Close();
 }
@@ -93,15 +99,12 @@ event Closed()
 {
     // In this case the remote client should have automatically closed
     // the connection, because we requested it in the HTTP request.
-    log("[ServerStatus] event closed");
-
-    // After the connection was closed we could establish a new
-    // connection using the same TcpLink instance.
+    log("[ServerStatus] Connection closed");
 }
 
-event ReceivedText( string Text )
+event ReceivedText(string Text)
 {
-    log("[ServerStatus] SplitText:: " $Text);
+    Log("[ServerStatus] ReceivedText: " $ Text);
 }
 
 function String GetReport()
@@ -114,23 +117,23 @@ function String GetReport()
 
 
   str = "{";
-  str $= KeyValue("serverreport","true")@",";
-  str $= KeyValue("ended",String(MultiplayerGameInfo(Level.Game).bOnGameEndCalled))@",";
-  str $= KeyValue("name",MultiplayerGameInfo(Level.Game).GameName)@",";
-  str $= KeyValueInt("timelimit",MultiplayerGameInfo(Level.Game).TimeLimit)@",";
-  str $= "\"players\":"$ParsePlayers()@",";
-  str $= KeyValue("port", string(Level.Game.GetServerPort()) );
+  str $= KeyValue("serverreport", "true")@",";
+  str $= KeyValue("ended", String(MultiplayerGameInfo(Level.Game).bOnGameEndCalled)) @ ",";
+  str $= KeyValue("name", MultiplayerGameInfo(Level.Game).GameName) @ ",";
+  str $= KeyValueInt("timelimit", MultiplayerGameInfo(Level.Game).TimeLimit) @ ",";
+  str $= "\"players\":" $ ParsePlayers() @ ",";
+  str $= KeyValue("port", string(Level.Game.GetServerPort()));
   str $= "}";
 
   return str;
 }
 
 function String KeyValue(string key, string value){
-	return "\""$key$"\":\""$value$"\"";
+	return "\"" $ key $ "\":\"" $ value $ "\"";
 }
 
 function String KeyValueInt(string key, int value){
-  return "\""$key$"\":"$value;
+  return "\"" $ key $ "\":" $ value;
 }
 
 function String ParsePlayers(){
@@ -146,39 +149,41 @@ function String ParsePlayers(){
   r = "[";
 
   b = true;
-  for( CTRL=Level.ControllerList;CTRL!=None;CTRL=CTRL.NextController )
+  for(CTRL = Level.ControllerList; CTRL != None; CTRL = CTRL.NextController)
   {
     c = PlayerCharacterController(CTRL);
     if(c == None) continue;
+	
     pri = TribesReplicationInfo(c.PlayerReplicationInfo);
     if(pri == None) continue;
+	
     IP = c.GetPlayerNetworkAddress();
     
-    if(b)b = false;
+    if(b) b = false;
     else r @= ",";
 
     r @= "{";
 
-    r @= KeyValue("name", pri.PlayerName)@",";
-    r @= KeyValue("ip", IP)@",";
-    r @= KeyValueInt("ping", pri.Ping)@",";
-    r @= KeyValueInt("starttime", pri.StartTime)@",";
-    r @= KeyValue("voice", pri.VoiceSetPackageName)@",";
-    r @= KeyValue("team", pri.team.localizedName)@",";
+    r @= KeyValue("name", pri.PlayerName) @ ",";
+    r @= KeyValue("ip", IP) @ ",";
+    r @= KeyValueInt("ping", pri.Ping) @ ",";
+    r @= KeyValueInt("starttime", pri.StartTime) @ ",";
+    r @= KeyValue("voice", pri.VoiceSetPackageName) @ ",";
+    r @= KeyValue("team", pri.team.localizedName) @ ",";
 
-    r @= KeyValueInt("score", pri.Score)@",";
-    r @= KeyValueInt("kills", pri.Kills)@",";
-    r @= KeyValueInt("deaths", pri.Deaths)@",";
-    r @= KeyValueInt("offense", pri.offenseScore)@",";
-    r @= KeyValueInt("defense", pri.defenseScore)@",";
+    r @= KeyValueInt("score", pri.Score) @ ",";
+    r @= KeyValueInt("kills", pri.Kills) @ ",";
+    r @= KeyValueInt("deaths", pri.Deaths) @ ",";
+    r @= KeyValueInt("offense", pri.offenseScore) @ ",";
+    r @= KeyValueInt("defense", pri.defenseScore) @ ",";
     r @= KeyValueInt("style", pri.styleScore);
     
-    for( i=0; i<pri.statDataList.Length; i++ )
+    for(i=0; i < pri.statDataList.Length; i++)
     {
       ammount = pri.statDataList[i].amount;
       classname = String(pri.statDataList[i].statClass);
 
-      r @= ","@KeyValueInt(classname, ammount);
+      r @= "," @ KeyValueInt(classname, ammount);
     }
 
     r @= "}";
@@ -212,17 +217,20 @@ static function array<string> Base64Encode(array<string> indata, out array<strin
     }
  
     dl = inp.length;
+	
     // fix byte array
     if ((dl%3) == 1)
     {
       inp[inp.length] = 0;
       inp[inp.length] = 0;
     }
+	
     if ((dl%3) == 2)
     {
       inp[inp.length] = 0;
     }
     i = 0;
+	
     while (i < dl)
     {
       outp[outp.length] = B64Lookup[(inp[i] >> 2)];
@@ -231,22 +239,26 @@ static function array<string> Base64Encode(array<string> indata, out array<strin
       outp[outp.length] = B64Lookup[(inp[i+2]&63)];
       i += 3;
     }
+	
     // pad result
     if ((dl%3) == 1)
     {
       outp[outp.length-1] = "=";
       outp[outp.length-2] = "=";
     }
+	
     if ((dl%3) == 2)
     {
       outp[outp.length-1] = "=";
     }
  
     res = "";
+	
     for (i = 0; i < outp.length; i++)
     {
       res = res$outp[i];
     }
+	
     result[result.length] = res;
   }
  
@@ -271,6 +283,7 @@ static function array<string> Base64Decode(array<string> indata)
     outp.length = 0;
     inp.length = 0;
     padded = 0;
+	
     for (i = 0; i < len(res); i++)
     {
       dl = Asc(Mid(res, i, 1));
@@ -286,6 +299,7 @@ static function array<string> Base64Decode(array<string> indata)
  
     dl = inp.length;
     i = 0;
+	
     while (i < dl)
     {
       outp[outp.length] = Chr((inp[i] << 2) | (inp[i+1] >> 4));
@@ -293,6 +307,7 @@ static function array<string> Base64Decode(array<string> indata)
       outp[outp.length] = Chr(((inp[i+2]&3)<<6) | (inp[i+3]));
       i += 4;
     }
+	
     outp.length = outp.length-padded;
  
     res = "";
@@ -300,6 +315,7 @@ static function array<string> Base64Decode(array<string> indata)
     {
       res = res$outp[i];
     }
+	
     result[result.length] = res;
   }
  
@@ -316,26 +332,23 @@ static function Base64EncodeLookupTable(out array<string> LookupTable)
   {
     LookupTable[i] = Chr(i+65);
   }
+  
   for (i = 0; i < 26; i++)
   {
     LookupTable[i+26] = Chr(i+97);
   }
+  
   for (i = 0; i < 10; i++)
   {
     LookupTable[i+52] = Chr(i+48);
   }
+  
   LookupTable[62] = "+";
   LookupTable[63] = "/";
 }
 
 defaultproperties
 {
-    TargetHost="stats.tribesrevengeance.com";
-    TargetPort=80;
-    Headers[0]="POST /upload HTTP/1.1";
-    Headers[1]="Host: stats.tribesrevengeance.com";
-    Headers[1]="Connection: close";
-
-    send = false;
-    reported = false;
+    TargetHost = "stats.tribesrevengeance.com";
+    TargetPort = 80;
 }
