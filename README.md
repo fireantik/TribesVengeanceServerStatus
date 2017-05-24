@@ -3,7 +3,7 @@ TribesVengeanceServerStatus
 
 Tribes Vengeance mutator that reports player stats and info
 
-[Download](https://github.com/fireantik/TribesVengeanceServerStatus/releases)
+[Download](https://github.com/jkelin/TribesVengeanceServerStatus/releases)
 
 Installation
 ============
