@@ -17,6 +17,6 @@ Config file (serverstatus.ini)
 ==============================
 ```
 [TribesVengeanceServerStatus.SSLink]
-TargetHost="report.stats.tribesrevengeance.com"
+TargetHost="report.stats.tribesrevengeance.net"
 TargetPort=80
 ```
