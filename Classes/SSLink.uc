@@ -136,6 +136,17 @@ function String KeyValueInt(string key, int value){
   return "\"" $ key $ "\":" $ value;
 }
 
+function string JsonEscape(string what) {
+  local string str;
+  
+  str = what;
+
+  str = Repl(str, "\\", "\\\\", false);
+  str = Repl(str, "\"", "\\\"", false);
+
+  return str;
+}
+
 function String ParsePlayers(){
   local String r,classname;
   local Controller CTRL;
@@ -164,7 +175,7 @@ function String ParsePlayers(){
 
     r @= "{";
 
-    r @= KeyValue("name", pri.PlayerName) @ ",";
+    r @= KeyValue("name", JsonEscape(pri.PlayerName)) @ ",";
     r @= KeyValue("ip", IP) @ ",";
     r @= KeyValueInt("ping", pri.Ping) @ ",";
     r @= KeyValueInt("starttime", pri.StartTime) @ ",";
@@ -349,6 +360,6 @@ static function Base64EncodeLookupTable(out array<string> LookupTable)
 
 defaultproperties
 {
-    TargetHost = "stats.tribesrevengeance.com";
+    TargetHost = "report.stats.tribesrevengeance.net";
     TargetPort = 80;
 }
